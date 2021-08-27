@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"urlshortMain/urlshort"
 )
@@ -16,7 +17,15 @@ func main() {
 		"/y": "https://youtube.com",
 	}
 	h := urlshort.MapHandler(pathsUrl, mux)
+	b, err := ioutil.ReadFile("url.yaml")
+	if err != nil {
+		panic(err)
+	}
+	ymalH, err := urlshort.YAMLHandler(b, h)
+	if err != nil {
+		panic(err)
+	}
 
-	http.ListenAndServe(":3000", h)
+	http.ListenAndServe(":3000", ymalH)
 
 }

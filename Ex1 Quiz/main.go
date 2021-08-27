@@ -13,6 +13,7 @@ import (
 func main() {
 	csvFile := flag.String("csv", "problems.csv", "File to be used. it should in format of question,answer")
 	timelimit := flag.Int("time", 30, "Time limit for the quiz in seconds")
+	flag.Parse()
 	problems := getProblems(*csvFile)
 	quiz(problems, *timelimit)
 }

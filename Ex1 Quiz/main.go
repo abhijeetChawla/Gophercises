@@ -3,30 +3,43 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
+	"flag"
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
-	problems := getProblems("problems.csv")
-	quiz(problems)
+	csvFile := flag.String("csv", "problems.csv", "File to be used. it should in format of question,answer")
+	timelimit := flag.Int("time", 30, "Time limit for the quiz in seconds")
+	problems := getProblems(*csvFile)
+	quiz(problems, *timelimit)
 }
 
-func quiz(pArr []problem) {
+func quiz(pArr []problem, timeLimit int) {
 	reader := bufio.NewReader(os.Stdin)
 	totalPoints := len(pArr)
 	count := 0
+
+	timer := time.NewTimer(time.Duration(timeLimit) * time.Second)
+problemLoop:
 	for i, p := range pArr {
 		fmt.Printf("Problem %d: %s \n", i, p.Q)
-		text, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Println("There was an error please continue with the quiz for now")
-			continue
-		}
-		answer := strings.ToLower(strings.TrimSpace(text))
-		if answer == p.A {
-			count++
+		answerCh := make(chan string)
+		go func() {
+			ans, _ := reader.ReadString('\n')
+			answerCh <- ans
+		}()
+		select {
+		case <-timer.C:
+			fmt.Println()
+			break problemLoop
+		case answer := <-answerCh:
+			answer = strings.ToLower(strings.TrimSpace(answer))
+			if answer == p.A {
+				count++
+			}
 		}
 	}
 

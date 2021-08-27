@@ -1,8 +1,8 @@
 package urlshort
 
 import (
-	"fmt"
 	"net/http"
+	"os"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -28,26 +28,38 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 // that will attempt to map any paths to their corresponding
 // URL. If the path is not provided in the YAML, then the
 // fallback http.Handler will be called instead.
-func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	pathsUrl, err := makeMap(yml)
+func YAMLHandler(yamlFile string, fallback http.Handler) (http.HandlerFunc, error) {
+	paths, err := makePathsUrl(yamlFile)
+	if err != nil {
+		return nil, err
+	}
+	pathsUrl, err := makeMap(paths)
 	if err != nil {
 		return nil, err
 	}
 	return MapHandler(pathsUrl, fallback), nil
 }
 
-func makeMap(yml []byte) (map[string]string, error) {
-	var paths []pathUrl
-	err := yaml.Unmarshal(yml, &paths)
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println(paths)
+func makeMap(paths []pathUrl) (map[string]string, error) {
 	var ret = make(map[string]string, len(paths))
 	for _, pu := range paths {
 		ret[pu.Path] = pu.URL
 	}
 	return ret, nil
+}
+
+func makePathsUrl(yml string) ([]pathUrl, error) {
+	f, err := os.Open(yml)
+	if err != nil {
+		return nil, err
+	}
+	var paths []pathUrl
+	dec := yaml.NewDecoder(f)
+	err = dec.Decode(&paths)
+	if err != nil {
+		return nil, err
+	}
+	return paths, nil
 }
 
 type pathUrl struct {

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<body>
+		<h1>{{.Title}}</h1>
+
+		{{range .Story}}
+		<p>{{.}}</p>
+		{{end}}
+
+		<h3>Options</h3>
+		<div class="options">
+			{{range .Options}}
+			<a href="{{.Arc}}"> <p>{{.Text}}</p></a>
+			{{else}}
+			<a href="/"><p>Lets Restart your adventure</p></a>
+			{{end}}
+		</div>
+
+		<style>
+			body {
+				display: flex;
+				flex-direction: column;
+				background-color: blanchedalmond;
+				padding: 10px 20px;
+				align-items: center;
+			}
+			h3 {
+				font-size: 1.5rem;
+			}
+			.options {
+				display: flex;
+				border: 2px solid #ab3889;
+				padding: 0 5px;
+			}
+		</style>
+	</body>
+</html>

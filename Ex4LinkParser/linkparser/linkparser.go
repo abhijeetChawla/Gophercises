@@ -15,6 +15,8 @@ type Link struct {
 	Text string
 }
 
+// this will work with valid html anchor tags and extract the href and the text inside of the anchor tag
+// Invalid html like anchor tag inside and anchor tag will not work
 func LinkParser(fileName string) (Links []Link, err error) {
 	file, err := os.Open(fileName)
 	if err != nil {

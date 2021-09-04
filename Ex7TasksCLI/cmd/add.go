@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
+	"tasks/db"
 
 	"github.com/spf13/cobra"
 )
@@ -12,8 +14,17 @@ var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add a new task to your TODO list",
 	Run: func(cmd *cobra.Command, args []string) {
-
-		fmt.Println("this is the task entered: ", strings.Join(args, " "))
+		if len(args) == 0 {
+			fmt.Println("This command requires a list of arguemnt")
+			return
+		}
+		t := strings.Join(args, " ")
+		newTask, err := db.CreateTask(t)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Printf("Added '%s' to your task list.\n", newTask.Value)
 	},
 }
 

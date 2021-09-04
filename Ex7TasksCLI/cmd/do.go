@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strconv"
+	"tasks/db"
 
 	"github.com/spf13/cobra"
 )
@@ -17,13 +19,27 @@ var doCmd = &cobra.Command{
 			return
 		}
 
-		doneTask, err := strconv.Atoi(args[0])
+		taskIndex, err := strconv.Atoi(args[0])
 		if err != nil {
 			fmt.Println("The argument passed is not a number")
 			return
 		}
 
-		fmt.Printf("This task will be done :%d \n", doneTask)
+		list, err := db.IncompleteTask()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		if taskIndex == 0 || taskIndex >= len(list) {
+			fmt.Println("There is no task at that index. Try the list command to get the index")
+			os.Exit(1)
+		}
+		t, err := db.DoTask(list[taskIndex-1].Key)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Printf("You have completed the '%s' task.", t.Value)
 	},
 }
 

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -103,4 +104,38 @@ func DeleteTask(key string) (Task, error) {
 		return b.Delete([]byte(key))
 	})
 	return t, err
+}
+
+func TasksInTimeRange(minTime, maxTime string) ([]Task, error) {
+	var list []Task
+	err := db.View(func(tx *bolt.Tx) error {
+		// Assume bucket exists and has keys
+		b := tx.Bucket([]byte(bucketName))
+		c := b.Cursor()
+		min := []byte(minTime)
+		max := []byte(maxTime)
+
+		// Iterate over the 90's.
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			var t Task
+			_ = json.Unmarshal(v, &t)
+			list = append(list, t)
+		}
+		return nil
+	})
+	return list, err
+}
+
+func CompletedTasks(minTime, maxTime string) ([]Task, error) {
+	list, err := TasksInTimeRange(minTime, maxTime)
+	if err != nil {
+		return nil, err
+	}
+	var ret []Task
+	for _, task := range list {
+		if task.Done {
+			ret = append(ret, task)
+		}
+	}
+	return ret, nil
 }

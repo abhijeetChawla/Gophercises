@@ -37,7 +37,7 @@ func CreateTask(taskString string) (Task, error) {
 	err := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketName))
 		curTime := time.Now().Format(time.RFC3339)
-		newTask := Task{
+		newTask = Task{
 			Key:   curTime,
 			Value: taskString,
 			Done:  false,
@@ -80,17 +80,6 @@ func DoTask(key string) (Task, error) {
 	return t, err
 }
 
-func DeleteTask(key string) (Task, error) {
-	var t Task
-	err := db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucketName))
-		taskBytes := b.Get([]byte(key))
-		_ = json.Unmarshal(taskBytes, &t)
-		return b.Delete([]byte(key))
-	})
-	return t, err
-}
-
 func IncompleteTask() ([]Task, error) {
 	all, err := AllTasks()
 	if err != nil {
@@ -103,4 +92,15 @@ func IncompleteTask() ([]Task, error) {
 		}
 	}
 	return done, nil
+}
+
+func DeleteTask(key string) (Task, error) {
+	var t Task
+	err := db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
+		taskBytes := b.Get([]byte(key))
+		_ = json.Unmarshal(taskBytes, &t)
+		return b.Delete([]byte(key))
+	})
+	return t, err
 }

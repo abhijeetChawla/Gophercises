@@ -1,5 +1,91 @@
 package db
 
-func initilaize() {
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"time"
 
+	bolt "go.etcd.io/bbolt"
+)
+
+var db *bolt.DB
+var bucketName = "TasksBucker"
+
+type Task struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+	Done  bool   `json:"done"`
+}
+
+func Init(dbpath string) {
+	var err error
+	db, err = bolt.Open(dbpath, 0666, nil)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
+	db.Update(func(tx *bolt.Tx) error {
+		// Use the transaction...
+		_, err := tx.CreateBucketIfNotExists([]byte(bucketName))
+		return err
+	})
+}
+
+func CreateTask(taskString string) error {
+	err := db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
+		curTime := time.Now().Format(time.RFC3339)
+		newTask := Task{
+			Key:   curTime,
+			Value: taskString,
+			Done:  false,
+		}
+		bytes, _ := json.Marshal(newTask)
+		err := b.Put([]byte(curTime), bytes)
+		return err
+	})
+	return err
+}
+
+func AllTasks() ([]Task, error) {
+	var list []Task
+	err := db.View(func(tx *bolt.Tx) error {
+		// Assume bucket exists and has keys
+		b := tx.Bucket([]byte(bucketName))
+		c := b.Cursor()
+
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var t Task
+			_ = json.Unmarshal(v, &t)
+			list = append(list, t)
+		}
+
+		return nil
+	})
+	return list, err
+}
+
+func DoTask(key string) (Task, error) {
+	var t Task
+	err := db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
+		taskBytes := b.Get([]byte(key))
+		_ = json.Unmarshal(taskBytes, &t)
+		t.Done = true
+		taskBytes, _ = json.Marshal(t)
+		return b.Put([]byte(key), taskBytes)
+	})
+	return t, err
+}
+
+func DeleteTask(key string) (Task, error) {
+	var t Task
+	err := db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
+		taskBytes := b.Get([]byte(key))
+		_ = json.Unmarshal(taskBytes, &t)
+		return b.Delete([]byte(key))
+	})
+	return t, err
 }

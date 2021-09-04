@@ -32,7 +32,8 @@ func Init(dbpath string) {
 	})
 }
 
-func CreateTask(taskString string) error {
+func CreateTask(taskString string) (Task, error) {
+	var newTask Task
 	err := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketName))
 		curTime := time.Now().Format(time.RFC3339)
@@ -45,7 +46,7 @@ func CreateTask(taskString string) error {
 		err := b.Put([]byte(curTime), bytes)
 		return err
 	})
-	return err
+	return newTask, err
 }
 
 func AllTasks() ([]Task, error) {
@@ -88,4 +89,18 @@ func DeleteTask(key string) (Task, error) {
 		return b.Delete([]byte(key))
 	})
 	return t, err
+}
+
+func IncompleteTask() ([]Task, error) {
+	all, err := AllTasks()
+	if err != nil {
+		return nil, err
+	}
+	var done []Task
+	for _, t := range all {
+		if !t.Done {
+			done = append(done, t)
+		}
+	}
+	return done, nil
 }
